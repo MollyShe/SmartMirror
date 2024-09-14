@@ -1,0 +1,1 @@
+from model.handClassifier.keypoint_classifier import KeyPointClassifier
