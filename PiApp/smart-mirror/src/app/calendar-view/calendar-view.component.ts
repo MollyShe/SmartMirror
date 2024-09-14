@@ -12,7 +12,7 @@ import { EventService, CalendarEvent } from '../services/event.service';
 export class CalendarViewComponent implements OnInit {
   daysOfWeek: string[] = [];
   hours: string[] = [];
-  events: calendarEvent[] = [];
+  events: CalendarEvent[] = [];
 
   // Define the start and end hours for the calendar view
   startHour: number = 6; // 6 AM
@@ -80,7 +80,7 @@ export class CalendarViewComponent implements OnInit {
     });
   }
 
-  getEventPosition(event: calendarEvent): { top: string; height: string } {
+  getEventPosition(event: CalendarEvent): { top: string; height: string } {
     const start = new Date(event.start);
     const end = new Date(event.end);
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // in hours

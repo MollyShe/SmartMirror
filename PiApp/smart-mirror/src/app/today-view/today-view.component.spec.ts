@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TodayViewComponent } from './today-view.component';
 
 describe('TodayViewComponent', () => {

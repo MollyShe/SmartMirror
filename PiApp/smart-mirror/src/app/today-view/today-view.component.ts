@@ -4,16 +4,6 @@ import { format, parseISO } from 'date-fns';
 import { CommonModule } from '@angular/common';
 import { CalendarEvent } from '../services/event.service';
 
-interface Event {
-  id: number;
-  title: string;
-  start: Date;
-  end: Date;   
-  description?: string;
-  startTime: string; // ISO string
-  endTime: string; // ISO string
-}
-
 @Component({
   selector: 'app-today-view',
   templateUrl: './today-view.component.html',
@@ -36,14 +26,21 @@ export class TodayViewComponent implements OnInit {
   async loadTodayEvents(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
-    const dateStr = format(this.currentDate, 'yyyy-MM-dd');
     (await this.eventService.getEvents()).subscribe(
       (data: CalendarEvent[]) => {
         this.isLoading = false;
+        data = data.filter((event: CalendarEvent) => {
+          return (
+            event.start.getDate() === this.currentDate.getDate() &&
+            event.start.getMonth() === this.currentDate.getMonth() &&
+            event.start.getFullYear() === this.currentDate.getFullYear()
+          );
+        });
         // Sort events by start time
         this.events = data.sort((a: CalendarEvent, b: CalendarEvent) => {
           return a.start.getTime() - b.start.getTime();
         });
+        console.log(this.events);
       },
       (error: any) => {
         this.isLoading = false;
