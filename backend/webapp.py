@@ -25,13 +25,15 @@ def calendar():
         i+=1
 
         #eventsntimes.append([event.get("SUMMARY"), event.get("DTSTART")])
+    print(eventsntimes)
     return eventsntimes
 
 def cleanTime(datetime: str):
     if(datetime):
         datetime = datetime.removeprefix("vDDDTypes(")
         datetime = datetime.removesuffix(", Parameters({}))")
-
+        datetime = datetime.replace(", Parameters({'TZID': 'America/New_York'}))", "")
+        datetime = datetime.replace("Parameters({'VALUE': 'DATE'}))", "")
         return datetime
     
     return
