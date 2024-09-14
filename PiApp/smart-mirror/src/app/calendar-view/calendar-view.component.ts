@@ -1,34 +1,6 @@
-import { Component, OnInit, NgModule, Inject } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  addDays,
-  format,
-  isSameMonth,
-  isSameDay,
-} from 'date-fns';
-import { EventService } from '../services/event.service';
-
-interface Event {
-  id: number;
-  title: string;
-  description?: string;
-  startTime: string; // ISO string
-  endTime: string; // ISO string
-}
-
-interface CalendarEvent extends Event {
-  id: number;
-  title: string;
-  start: Date | string;
-  end: Date | string;
-  description?: string;
-}
+import { EventService, CalendarEvent } from '../services/event.service';
 
 @Component({
   selector: 'app-calendar-view',
@@ -79,16 +51,15 @@ export class CalendarViewComponent implements OnInit {
     }
   }
 
-  fetchEvents(): void {
-    this.eventService.getEvents().subscribe({
-      next: (events: Event[]) => {
-        this.events = events.map(
-          (event): CalendarEvent => ({
-            ...event,
-            start: new Date(event.startTime),
-            end: new Date(event.endTime),
-          })
-        );
+  async fetchEvents(): Promise<void> {
+    const events = await this.eventService.getEvents();
+    (await this.eventService.getEvents()).subscribe({
+      next: (value: CalendarEvent[]) => {
+        this.events = value.map((event) => ({
+          ...event,
+          start: new Date(event.start),
+          end: new Date(event.end),
+        }));
       },
       error: (err) => {
         console.error('Error fetching events:', err);
