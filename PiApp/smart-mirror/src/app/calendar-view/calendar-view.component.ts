@@ -76,7 +76,6 @@ export class CalendarViewComponent implements OnInit {
     });    
   }
   
-
   getEventsForDay(dayIndex: number): CalendarEvent[] {
     const selectedDay = new Date();
     selectedDay.setDate(selectedDay.getDate() - ((new Date().getDay() + 6) % 7) + dayIndex);
