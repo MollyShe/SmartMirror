@@ -29,7 +29,7 @@
   .event-time {
     width: 150px;
     font-weight: bold;
-    color: #555;
+    color: #4285F4;
   }
   
   .event-details {
@@ -43,7 +43,7 @@
   
   .event-details p {
     margin: 0;
-    color: #777;
+    color: #d9dbdc;
   }
   
   /* Responsive Design */
