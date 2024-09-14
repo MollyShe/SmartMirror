@@ -14,6 +14,7 @@ import websockets
 import json
 from time import time
 
+DEBUG_MODE = False
 # class CvFpsCalc(object):
 #     def __init__(self, buffer_len=1):
 #         self._start_tick = cv.getTickCount()
@@ -192,27 +193,32 @@ async def process_stream():
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
 
                 # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
-                debug_image = draw_info_text(
-                    debug_image,
-                    brect,
-                    handedness,
-                    keypoint_classifier_labels[hand_sign_id],
-                )
-                debug_image = draw_movement_info(debug_image, movement_direction)
+                if DEBUG_MODE: 
+                    debug_image = draw_bounding_rect(use_brect, debug_image, brect)
+                    debug_image = draw_landmarks(debug_image, landmark_list)
+                    debug_image = draw_info_text(
+                        debug_image,
+                        brect,
+                        handedness,
+                        keypoint_classifier_labels[hand_sign_id],
+                    )
+                    debug_image = draw_movement_info(debug_image, movement_direction)
         else:
             landmark_history.clear()
 
-        # debug_image = draw_info(debug_image, fps, mode, number)
-        debug_image = draw_info(debug_image, mode, number)
-        await asyncio.sleep(0.01)  # Small delay to prevent blocking
+        if DEBUG_MODE:
+            # debug_image = draw_info(debug_image, fps, mode, number)
+            debug_image = draw_info(debug_image, mode, number)
+            await asyncio.sleep(0.01)  # Small delay to prevent blocking
 
-        # Screen reflection
-        cv.imshow('Hand Gesture Recognition', debug_image)
+            # Screen reflection
+            cv.imshow('Hand Gesture Recognition', debug_image)
+        else: 
+            await asyncio.sleep(0.01)  # Small delay to prevent blocking
 
     cap.release()
-    cv.destroyAllWindows()
+    if DEBUG_MODE:
+        cv.destroyAllWindows()
 
 
 def select_mode(key, mode):
