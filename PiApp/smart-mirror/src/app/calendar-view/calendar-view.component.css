@@ -1,86 +1,85 @@
 /* src/app/calendar/calendar.component.css */
 
 .calendar-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-  }
-  
-  .calendar-header {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .time-column {
-    width: 60px;
-    background-color: #f9f9f9;
-  }
-  
-  .day-columns {
-    display: flex;
-    flex: 1;
-  }
-  
-  .day-column {
-    flex: 1;
-    border-left: 1px solid #ddd;
-    position: relative;
-  }
-  
-  .day-header {
-    padding: 10px;
-    background-color: #f1f1f1;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-    font-weight: bold;
-  }
-  
-  .calendar-body {
-    display: flex;
-    flex: 1;
-    overflow: auto;
-    overflow-y: auto;
-  }
-  
-  .time-column {
-    width: 60px;
-    background-color: #f9f9f9;
-    border-right: 1px solid #ddd;
-  }
-  
-  .time-slot {
-    height: 60px; /* 1 hour = 60px */
-    border-bottom: 1px solid #eee;
-    padding: 2px;
-    font-size: 12px;
-    text-align: right;
-    padding-right: 5px;
-    box-sizing: border-box;
-  }
-  
-  .day-column {
-    flex: 1;
-    position: relative;
-    min-height: 100%;
-  }
-  
-  .day-column .time-slot {
-    height: 60px;
-    border-bottom: 1px solid #eee;
-    min-height: 60px;
-  }
-  
-  .event {
-    position: absolute;
-    left: 5px;
-    right: 5px;
-    background-color: #4285F4;
-    color: white;
-    padding: 2px;
-    border-radius: 4px;
-    font-size: 12px;
-    overflow: hidden;
-    cursor: pointer;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.calendar-header {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+}
+
+.time-column {
+  width: 60px;
+  background-color: #f9f9f9;
+}
+
+.day-columns {
+  display: flex;
+  flex: 1;
+}
+
+.day-column {
+  flex: 1;
+  border-left: 1px solid #ddd;
+  position: relative;
+}
+
+.day-header {
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  font-weight: bold;
+}
+
+.calendar-body {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  overflow-y: auto;
+}
+
+.time-column {
+  width: 60px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #ddd;
+}
+
+.time-slot {
+  height: 60px; /* 1 hour = 60px */
+  border-bottom: 1px solid #eee;
+  padding: 2px;
+  font-size: 12px;
+  text-align: right;
+  padding-right: 5px;
+  box-sizing: border-box;
+}
+
+.day-column {
+  flex: 1;
+  position: relative;
+  min-height: 100%;
+}
+
+.day-column .time-slot {
+  height: 60px;
+  border-bottom: 1px solid #eee;
+  min-height: 60px;
+}
+
+.event {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  background-color: #4285f4;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  padding-left: 5px;
+}

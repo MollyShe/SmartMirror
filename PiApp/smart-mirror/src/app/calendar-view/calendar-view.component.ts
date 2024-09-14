@@ -87,10 +87,13 @@ export class CalendarViewComponent implements OnInit {
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // in hours
     const top =
       (start.getHours() + start.getMinutes() / 60 - this.startHour) * 60; // in pixels
-    const height = duration * 60; // assuming 1 hour = 60px
+    var height = duration * 60; // assuming 1 hour = 60px
+    if (height < 25) {
+      height = 25;
+    }
     return {
-      top: `${top}px`,
-      height: `${height}px`,
+      top: `${top + 5}px`,
+      height: `${height - 10}px`,
     };
   }
 }
