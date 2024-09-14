@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { EventService } from '../services/event.service';
 import { format, parseISO } from 'date-fns';
 import { CommonModule } from '@angular/common';
+import { CalendarEvent } from '../services/event.service';
 
-
-
-interface calendarEvent {
+interface Event {
   id: number;
   title: string;
   start: Date;
   end: Date;   
   description?: string;
+  startTime: string; // ISO string
+  endTime: string; // ISO string
 }
 
 @Component({
@@ -21,12 +22,12 @@ interface calendarEvent {
   imports: [CommonModule],
 })
 export class TodayViewComponent implements OnInit {
-  events: calendarEvent[] = [];
+  events: CalendarEvent[] = [];
   currentDate: Date = new Date();
   isLoading: boolean = false;
   errorMessage: string = '';
 
-  constructor(private eventService: EventService) { }
+  constructor(@Inject(EventService) private eventService: EventService) {}
 
   ngOnInit(): void {
     this.loadTodayEvents();
@@ -36,11 +37,11 @@ export class TodayViewComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
-    (await this.eventService.getEventsByDate(dateStr)).subscribe(
-      (data: calendarEvent[]) => {
+    (await this.eventService.getEvents()).subscribe(
+      (data: CalendarEvent[]) => {
         this.isLoading = false;
         // Sort events by start time
-        this.events = data.sort((a: calendarEvent, b: calendarEvent) => {
+        this.events = data.sort((a: CalendarEvent, b: CalendarEvent) => {
           return a.start.getTime() - b.start.getTime();
         });
       },

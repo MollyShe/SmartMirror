@@ -1,4 +1,7 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Pycache
+/cvPlayground/model/handClassifier/__pycache__
+/cvPlayground/model/__pycache__
+/cvPlayground/__pycache__# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
 /dist
