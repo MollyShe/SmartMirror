@@ -1,9 +1,10 @@
 import json
 from flask import Flask, app
+from flask_cors import CORS
 import requests
 import icalendar
 app = Flask("main")
-
+CORS(app)  # This will allow all origins
 @app.get("/temperature")
 def hello_world():
     return getNOAATemp()
@@ -24,7 +25,6 @@ def calendar():
         i+=1
 
         #eventsntimes.append([event.get("SUMMARY"), event.get("DTSTART")])
-    print(eventsntimes)
     return eventsntimes
 
 def cleanTime(datetime: str):
