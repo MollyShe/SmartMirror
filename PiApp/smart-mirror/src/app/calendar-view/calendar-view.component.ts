@@ -35,7 +35,7 @@ interface CalendarEvent extends Event {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './calendar-view.component.html',
-  styleUrls: ['./calendar-view.component.css'],
+  styleUrls: ['./calendar-view.component.css']
 })
 export class CalendarViewComponent implements OnInit {
   daysOfWeek: string[] = [];
@@ -46,6 +46,7 @@ export class CalendarViewComponent implements OnInit {
   startHour: number = 6; // 6 AM
   endHour: number = 22; // 10 PM
 
+  constructor(private eventService: EventService) {}
   constructor(@Inject(EventService) private eventService: EventService) {}
 
   ngOnInit(): void {
