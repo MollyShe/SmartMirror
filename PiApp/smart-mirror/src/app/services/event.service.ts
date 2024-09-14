@@ -16,34 +16,47 @@ interface Event {
   providedIn: 'root',
 })
 export class EventService {
-  // Mock API data
-  private mockEvents: Event[] = [
-    {
-      id: 1,
-      title: 'Team Meeting',
-      startTime: '2024-09-13T12:34:00Z',
-      endTime: '2024-09-13T13:34:00Z',
-    },
-    {
-      id: 2,
-      title: 'Client Call',
-      startTime: '2024-09-13T15:00:00Z',
-      endTime: '2024-09-13T16:00:00Z',
-    },
-    {
-      id: 3,
-      title: 'Lunch',
-      startTime: '2024-09-12T12:00:00Z',
-      endTime: '2024-09-12T13:00:00Z',
-    },
-    {
-      id: 4,
-      title: 'Coffee Break',
-      startTime: '2024-09-10T10:30:00Z',
-      endTime: '2024-09-10T10:45:00Z',
-    },
-  ];
 
+  async getEvents(): Promise<Observable<CalendarEvent[]>> {
+    // Mock API data (strings)
+    const apiURL = 'http://127.0.0.1:5000/calendar';
+    let json;
+    const data = await fetch(apiURL);
+    const dates = await data.json()
+    
+    /*[
+      {
+        id: 1,
+        title: 'Team Meeting',
+        start: '2024-09-13T12:34:00Z',  // ISO string
+        end: '2024-09-13T13:34:00Z',    // ISO string
+      },
+      {
+        id: 2,
+        title: 'Client Call',
+        start: '2024-09-13T15:00:00Z',  // ISO string
+        end: '2024-09-13T16:00:00Z',    // ISO string
+      },
+      {
+        id: 3,
+        title: 'Lunch',
+        start: '2024-09-12T12:00:00Z',  // ISO string
+        end: '2024-09-12T13:00:00Z',    // ISO string
+      },
+      {
+        id: 4,
+        title: 'Coffee Break',
+        start: '2024-09-10T10:30:00Z',  // ISO string
+        end: '2024-09-10T10:45:00Z',    // ISO string
+      },
+    ]; */
+
+    // Convert start and end strings to Date objects
+    const convertedEvents: CalendarEvent[] = dates.map((event:CalendarEvent) => ({
+      ...event,
+      start: new Date(event.start),  // Convert string to Date
+      end: new Date(event.end),      // Convert string to Date
+    }));
   constructor() { }
 
   /**

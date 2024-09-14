@@ -56,13 +56,15 @@ export class CalendarViewComponent implements OnInit {
     }
   }
 
-  fetchEvents(): void {
-    this.eventService.getEvents().subscribe({
+  async fetchEvents(): Promise<void> {
+    const events = await this.eventService.getEvents();
+    (await this.eventService.getEvents()).subscribe({
       next: (events: CalendarEvent[]) => {
         this.events = events.map(event => ({
           ...event,
           start: new Date(event.start),
           end: new Date(event.end),
+          
         }));
       },
       error: (err) => {
