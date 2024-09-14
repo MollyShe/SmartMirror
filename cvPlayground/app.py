@@ -14,7 +14,7 @@ import websockets
 import json
 from time import time
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 # class CvFpsCalc(object):
 #     def __init__(self, buffer_len=1):
 #         self._start_tick = cv.getTickCount()
@@ -56,11 +56,22 @@ swipe_threshold = 0.47  # Percentage of screen width
 min_velocity = 290 # Minimum velocity for a swipe (screen widths per second)
 last_swipe_time = 0
 cooldown = 1.5  # Cooldown period in seconds
+min_frames_visible = 6  # Minimum number of frames the hand needs to be visible
+
+# Track hand visibility
+hand_visible_frames = 0
+hand_visible = False
 
 def track_movement(landmark_history):
-    global last_swipe_time
+    global last_swipe_time, hand_visible_frames
+
     if len(landmark_history) < 2:
         return None
+    
+    if hand_visible_frames < min_frames_visible:
+        return None
+    else: 
+        hand_visible_frames = 0
 
     frame_width = 1  # Normalized coordinates
     current_time = time()
@@ -92,6 +103,7 @@ async def main():
     await asyncio.gather(websocket_server(), process_stream())
 
 async def process_stream():
+    global hand_visible_frames
     args = {"device": 0,
             "width": 1440, 
             "height": 810, 
@@ -166,6 +178,7 @@ async def process_stream():
         image.flags.writeable = True
 
         if results.multi_hand_landmarks is not None:
+            hand_visible_frames += 1
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
                 # Bounding box calculation
@@ -182,15 +195,17 @@ async def process_stream():
                 # Track movement direction
                 movement_direction = track_movement(landmark_history)
 
-                if movement_direction:
-                    print(f"Swipe {movement_direction} detected!")
-                    await broadcast({"swipe": movement_direction})
-
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                
+
+                correct_sign = hand_sign_id == 5 or hand_sign_id == 2 or hand_sign_id == 0
+                if movement_direction and correct_sign :
+                    print(f"Swipe {movement_direction} detected!")
+                    await broadcast({"swipe": movement_direction})
 
                 # Drawing part
                 if DEBUG_MODE: 
@@ -219,6 +234,7 @@ async def process_stream():
     cap.release()
     if DEBUG_MODE:
         cv.destroyAllWindows()
+    return
 
 
 def select_mode(key, mode):
