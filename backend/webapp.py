@@ -73,4 +73,4 @@ def returnGesture():
     pass  # get from nathan
 
 
-app.run(port=5000)
+app.run(port=5400, host="0.0.0.0")
