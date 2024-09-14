@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { CalendarViewComponent } from './calendar-view/calendar-view.component';
+import { TodayViewComponent } from './today-view/today-view.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CalendarViewComponent],
+  imports: [RouterOutlet, TodayViewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
