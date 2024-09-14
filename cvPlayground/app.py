@@ -10,30 +10,14 @@ from collections import deque
 from model import KeyPointClassifier
 
 import asyncio
+import signal
 import websockets
 import json
+import sys
 from time import time
 
 DEBUG_MODE = True
-# class CvFpsCalc(object):
-#     def __init__(self, buffer_len=1):
-#         self._start_tick = cv.getTickCount()
-#         self._freq = 1000.0 / cv.getTickFrequency()
-#         self._difftimes = deque(maxlen=buffer_len)
 
-#     def get(self):
-#         current_tick = cv.getTickCount()
-#         different_time = (current_tick - self._start_tick) * self._freq
-#         self._start_tick = current_tick
-
-#         self._difftimes.append(different_time)
-
-#         fps = 1000.0 / (sum(self._difftimes) / len(self._difftimes))
-#         fps_rounded = round(fps, 2)
-
-#         return fps_rounded
-    
-# WebSocket server
 connected = set()
 
 async def register(websocket):
@@ -50,6 +34,40 @@ async def broadcast(message):
 async def websocket_server():
     server = await websockets.serve(register, "localhost", 8765)
     await server.wait_closed()
+
+async def shutdown(cap):
+    print("Shutting down...")
+
+    cap.release()
+    if DEBUG_MODE:
+        cv.destroyAllWindows()
+
+    
+
+    # Get all running tasks
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+
+    # Cancel all tasks
+    for task in tasks:
+        task.cancel()
+
+    print(f"Cancelling {len(tasks)} tasks...")
+
+    try:
+        # Wait for all tasks to be cancelled
+        await asyncio.gather(*tasks, return_exceptions=True)
+    except Exception: 
+        pass
+    finally:
+        # Force exit to prevent any further error logging
+        sys.exit(0)
+
+    print("Shutdown complete.")
+
+    loop = asyncio.get_running_loop()
+    loop.stop()
+    
+
 
 # Variables for swipe detection
 swipe_threshold = 0.47  # Percentage of screen width
@@ -101,6 +119,7 @@ def track_movement(landmark_history):
 
 async def main():
     await asyncio.gather(websocket_server(), process_stream())
+
 
 async def process_stream():
     global hand_visible_frames
@@ -206,6 +225,12 @@ async def process_stream():
                 if movement_direction and correct_sign :
                     print(f"Swipe {movement_direction} detected!")
                     await broadcast({"swipe": movement_direction})
+                
+                if hand_sign_id == 4:
+                    print("Shutdown gesture detected!")
+                    await broadcast({"message": "Screw You, BYE!"})
+                    await shutdown(cap)
+                    return
 
                 # Drawing part
                 if DEBUG_MODE: 
@@ -234,7 +259,6 @@ async def process_stream():
     cap.release()
     if DEBUG_MODE:
         cv.destroyAllWindows()
-    return
 
 
 def select_mode(key, mode):
