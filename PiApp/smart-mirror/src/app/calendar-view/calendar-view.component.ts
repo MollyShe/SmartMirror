@@ -1,13 +1,32 @@
-import { Component, OnInit, NgModule } from '@angular/core';
+import { Component, OnInit, NgModule, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format, isSameMonth, isSameDay } from 'date-fns';
+import {
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  format,
+  isSameMonth,
+  isSameDay,
+} from 'date-fns';
 import { EventService } from '../services/event.service';
 
-interface CalendarEvent {
+interface Event {
   id: number;
   title: string;
-  start: Date;
-  end: Date;   
+  description?: string;
+  startTime: string; // ISO string
+  endTime: string; // ISO string
+}
+
+interface CalendarEvent extends Event {
+  id: number;
+  title: string;
+  start: Date | string;
+  end: Date | string;
   description?: string;
 }
 
@@ -28,6 +47,7 @@ export class CalendarViewComponent implements OnInit {
   endHour: number = 22; // 10 PM
 
   constructor(private eventService: EventService) {}
+  constructor(@Inject(EventService) private eventService: EventService) {}
 
   ngOnInit(): void {
     this.initializeDays();
@@ -43,7 +63,11 @@ export class CalendarViewComponent implements OnInit {
     for (let i = 1; i <= 7; i++) {
       const d = new Date(current);
       d.setDate(current.getDate() - ((day + 6) % 7) + i - 1);
-      this.daysOfWeek.push(`${d.toLocaleDateString(undefined, { weekday: 'short' })} ${d.getDate()}`);
+      this.daysOfWeek.push(
+        `${d.toLocaleDateString(undefined, {
+          weekday: 'short',
+        })} ${d.getDate()}`
+      );
     }
   }
 
@@ -58,27 +82,30 @@ export class CalendarViewComponent implements OnInit {
 
   fetchEvents(): void {
     this.eventService.getEvents().subscribe({
-      next: (events: CalendarEvent[]) => {
-        this.events = events.map(event => ({
-          ...event,
-          start: new Date(event.start),
-          end: new Date(event.end),
-        }));
+      next: (events: Event[]) => {
+        this.events = events.map(
+          (event): CalendarEvent => ({
+            ...event,
+            start: new Date(event.startTime),
+            end: new Date(event.endTime),
+          })
+        );
       },
       error: (err) => {
         console.error('Error fetching events:', err);
       },
       complete: () => {
         console.log('Events fetched successfully');
-      }
-    });    
+      },
+    });
   }
-  
 
   getEventsForDay(dayIndex: number): CalendarEvent[] {
     const selectedDay = new Date();
-    selectedDay.setDate(selectedDay.getDate() - ((new Date().getDay() + 6) % 7) + dayIndex);
-    return this.events.filter(event => {
+    selectedDay.setDate(
+      selectedDay.getDate() - ((new Date().getDay() + 6) % 7) + dayIndex
+    );
+    return this.events.filter((event) => {
       const eventDate = new Date(event.start);
       return eventDate.toDateString() === selectedDay.toDateString();
     });
@@ -88,11 +115,12 @@ export class CalendarViewComponent implements OnInit {
     const start = new Date(event.start);
     const end = new Date(event.end);
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // in hours
-    const top = ((start.getHours() + start.getMinutes() / 60) - this.startHour) * 60; // in pixels
+    const top =
+      (start.getHours() + start.getMinutes() / 60 - this.startHour) * 60; // in pixels
     const height = duration * 60; // assuming 1 hour = 60px
     return {
       top: `${top}px`,
-      height: `${height}px`
+      height: `${height}px`,
     };
   }
 }
