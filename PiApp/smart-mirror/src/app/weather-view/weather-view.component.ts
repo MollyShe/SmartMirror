@@ -4,8 +4,22 @@ import { MatCardModule } from '@angular/material/card';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables } from 'chart.js';
+import { HttpClient } from '@angular/common/http';
+import { DatePipe } from '@angular/common';
 
 Chart.register(...registerables);
+
+interface WeatherData {
+  startTime: string;
+  temperature: number;
+  endTime: string;
+  icon: string;
+  probabilityOfPrecipitation: {
+    unitCode: string;
+    value: number;
+  };
+  shortForecast: string;
+}
 
 @Component({
   selector: 'app-weather-view',
@@ -18,7 +32,8 @@ export class WeatherViewComponent implements OnInit {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   location: string = 'Blacksburg, VA';
-  weatherIcon: string = 'sunny';
+  weatherIcon: string =
+    'https://api.weather.gov/icons/land/night/bkn?size=small';
   temperature: number = 72;
   precipitationChance: number = 20;
   forecast: string = 'Sunny with a high of 75°F';
@@ -65,9 +80,46 @@ export class WeatherViewComponent implements OnInit {
     },
   };
 
-  constructor() {}
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     // Here you would typically call a service to fetch real weather data
+    this.http
+      .get<[WeatherData]>('http://localhost:5000/temperature')
+      .subscribe({
+        next: (data) => {
+          var newTempData: any[] = [];
+          data.slice(0, 12).forEach((i) => {
+            let time: Date = new Date(i.startTime);
+            newTempData.push({
+              time: time.toLocaleTimeString(),
+              temp: i.temperature,
+            });
+          });
+          console.log(newTempData);
+          this.temperatureData = newTempData;
+          this.temperature = newTempData[0].temp;
+          this.precipitationChance = data[0].probabilityOfPrecipitation.value;
+          this.forecast = data[0].shortForecast;
+
+          this.lineChartData = {
+            labels: this.temperatureData.map((data) => data.time),
+            datasets: [
+              {
+                data: this.temperatureData.map((data) => data.temp),
+                label: 'Temperature',
+                fill: false,
+                tension: 0.5,
+                borderColor: 'rgba(255,165,0,0.8)',
+                backgroundColor: 'rgba(255,165,0,0.3)',
+              },
+            ],
+          };
+        },
+        error: (error) => {
+          console.error('Error fetching weather data:', error);
+          // Handle error (e.g., show error message to user)
+        },
+      });
   }
 }

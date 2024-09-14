@@ -5,10 +5,7 @@
       <div class="current-temp">{{ temperature }}°F</div>
       <div class="weather-icon">
         <!-- Replace with actual icon component or image based on weatherIcon -->
-        <img
-          [src]="'/assets/weather-icons/' + weatherIcon + '.png'"
-          alt="Weather icon"
-        />
+        <img [src]="weatherIcon" alt="Weather icon" />
       </div>
     </div>
 

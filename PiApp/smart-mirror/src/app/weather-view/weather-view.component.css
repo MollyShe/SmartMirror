@@ -23,6 +23,10 @@ h2 {
 }
 
 .weather-icon img {
+  border-radius: 25%;
+}
+
+.weather-icon img {
   width: 200px;
   height: 200px;
 }
