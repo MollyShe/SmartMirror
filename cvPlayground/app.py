@@ -16,7 +16,7 @@ import json
 import sys
 from time import time
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 connected = set()
 
@@ -178,10 +178,11 @@ async def process_stream():
         # fps = cvFpsCalc.get()
 
         # Process Key (ESC: end)
-        key = cv.waitKey(10)
-        if key == 27:  # ESC
-            break
-        number, mode = select_mode(key, mode)
+        if DEBUG_MODE:
+            key = cv.waitKey(10)
+            if key == 27:  # ESC
+                break
+            number, mode = select_mode(key, mode)
 
         # Camera capture
         ret, image = cap.read()
@@ -215,8 +216,9 @@ async def process_stream():
                 # Track movement direction
                 movement_direction = track_movement(landmark_history)
 
-                # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list)
+                if DEBUG_MODE:
+                    # Write to the dataset file
+                    logging_csv(number, mode, pre_processed_landmark_list)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
