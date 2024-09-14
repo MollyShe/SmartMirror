@@ -4,19 +4,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 
-interface Event {
+interface CalendarEvent {
   id: number;
   title: string;
+  start: Date; // ISO string
+  end: Date;   // ISO string
   description?: string;
-  startTime: string; // ISO string
-  endTime: string;   // ISO string
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class EventService {
-
   async getEvents(): Promise<Observable<CalendarEvent[]>> {
     // Mock API data (strings)
     const apiURL = 'http://127.0.0.1:5000/calendar';
@@ -59,24 +58,6 @@ export class EventService {
     }));
   constructor() { }
 
-  /**
-   * Fetch all events (for testing or other components)
-   * @returns Observable of Event array
-   */
-  getEvents(): Observable<Event[]> {
-    return of(this.mockEvents); // Return as Observable
-  }
-
-  /**
-   * Fetch events for a specific date.
-   * @param date - Date in 'YYYY-MM-DD' format
-   * @returns Observable of Event array
-   */
-  getEventsByDate(date: string): Observable<Event[]> {
-    const filteredEvents = this.mockEvents.filter(event => {
-      const eventDate = new Date(event.startTime).toISOString().split('T')[0];
-      return eventDate === date;
-    });
-    return of(filteredEvents);
+    return of(convertedEvents); // Return as Observable
   }
 }
