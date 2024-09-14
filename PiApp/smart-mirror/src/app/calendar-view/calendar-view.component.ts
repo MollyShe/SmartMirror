@@ -64,6 +64,7 @@ export class CalendarViewComponent implements OnInit {
           ...event,
           start: new Date(event.start),
           end: new Date(event.end),
+          
         }));
       },
       error: (err) => {

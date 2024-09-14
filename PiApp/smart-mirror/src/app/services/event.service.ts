@@ -18,15 +18,10 @@ interface CalendarEvent {
 export class EventService {
   async getEvents(): Promise<Observable<CalendarEvent[]>> {
     // Mock API data (strings)
-    const apiURL = 'localhost:5000/calendar';
+    const apiURL = 'http://127.0.0.1:5000/calendar';
     let json;
-    const data = await fetch(apiURL).then(response =>{
-      if(!response.ok){
-        throw new Error('wacky things afoot in event.service.ts');
-      }
-      return response.json();
-    });
-
+    const data = await fetch(apiURL);
+    const dates = await data.json()
     
     /*[
       {
@@ -56,7 +51,7 @@ export class EventService {
     ]; */
 
     // Convert start and end strings to Date objects
-    const convertedEvents: CalendarEvent[] = data.map((event:CalendarEvent) => ({
+    const convertedEvents: CalendarEvent[] = dates.map((event:CalendarEvent) => ({
       ...event,
       start: new Date(event.start),  // Convert string to Date
       end: new Date(event.end),      // Convert string to Date
