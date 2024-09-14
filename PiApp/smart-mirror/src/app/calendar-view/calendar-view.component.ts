@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format, isSameMonth, isSameDay } from 'date-fns';
 import { EventService } from '../services/event.service';
 
-interface CalendarEvent {
+interface calendarEvent {
   id: number;
   title: string;
   start: Date;
   end: Date;   
   description?: string;
 }
+
 
 @Component({
   selector: 'app-calendar-view',
@@ -21,7 +22,7 @@ interface CalendarEvent {
 export class CalendarViewComponent implements OnInit {
   daysOfWeek: string[] = [];
   hours: string[] = [];
-  events: CalendarEvent[] = [];
+  events: calendarEvent[] = [];
 
   // Define the start and end hours for the calendar view
   startHour: number = 6; // 6 AM
@@ -57,17 +58,15 @@ export class CalendarViewComponent implements OnInit {
   }
 
   async fetchEvents(): Promise<void> {
-    const events = await this.eventService.getEvents();
     (await this.eventService.getEvents()).subscribe({
-      next: (events: CalendarEvent[]) => {
+      next: (events: calendarEvent[]) => {
         this.events = events.map(event => ({
           ...event,
           start: new Date(event.start),
           end: new Date(event.end),
-          
         }));
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error fetching events:', err);
       },
       complete: () => {
@@ -76,7 +75,8 @@ export class CalendarViewComponent implements OnInit {
     });    
   }
   
-  getEventsForDay(dayIndex: number): CalendarEvent[] {
+
+  getEventsForDay(dayIndex: number): calendarEvent[] {
     const selectedDay = new Date();
     selectedDay.setDate(selectedDay.getDate() - ((new Date().getDay() + 6) % 7) + dayIndex);
     return this.events.filter(event => {
@@ -85,7 +85,7 @@ export class CalendarViewComponent implements OnInit {
     });
   }
 
-  getEventPosition(event: CalendarEvent): { top: string; height: string } {
+  getEventPosition(event: calendarEvent): { top: string; height: string } {
     const start = new Date(event.start);
     const end = new Date(event.end);
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // in hours

@@ -2,14 +2,14 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, filter, map } from 'rxjs';
 
-interface Event {
+interface calendarEvent {
   id: number;
   title: string;
   description?: string;
-  startTime: string; // ISO string
-  endTime: string;   // ISO string
+  start: Date; // ISO string
+  end: Date;   // ISO string
 }
 
 @Injectable({
@@ -17,7 +17,7 @@ interface Event {
 })
 export class EventService {
 
-  async getEvents(): Promise<Observable<CalendarEvent[]>> {
+  async getEvents(): Promise<Observable<calendarEvent[]>> {
     // Mock API data (strings)
     const apiURL = 'http://127.0.0.1:5000/calendar';
     let json;
@@ -52,31 +52,50 @@ export class EventService {
     ]; */
 
     // Convert start and end strings to Date objects
-    const convertedEvents: CalendarEvent[] = dates.map((event:CalendarEvent) => ({
+    const convertedEvents: calendarEvent[] = dates.map((event:calendarEvent) => ({
       ...event,
       start: new Date(event.start),  // Convert string to Date
       end: new Date(event.end),      // Convert string to Date
     }));
+
+    return of(convertedEvents);
+  }
   constructor() { }
 
-  /**
-   * Fetch all events (for testing or other components)
-   * @returns Observable of Event array
-   */
-  getEvents(): Observable<Event[]> {
-    return of(this.mockEvents); // Return as Observable
-  }
+  // /**
+  //  * Fetch all events (for testing or other components)
+  //  * @returns Observable of Event array
+  //  */
+  // async getEvents(): Promise<Observable<Event[]>> {
+  //   return of(await this.getEvents()); // Return as Observable
+  // }
 
   /**
    * Fetch events for a specific date.
    * @param date - Date in 'YYYY-MM-DD' format
    * @returns Observable of Event array
    */
-  getEventsByDate(date: string): Observable<Event[]> {
-    const filteredEvents = this.mockEvents.filter(event => {
-      const eventDate = new Date(event.startTime).toISOString().split('T')[0];
-      return eventDate === date;
-    });
-    return of(filteredEvents);
+  // async getEventsByDate(date: string): Promise<Observable<Event[]>> {
+  //   const filteredEvents = await this.getEvents().filter((event: { startTime: string | number | Date; }) => {
+  //     const eventDate = new Date(event.startTime).toISOString().split('T')[0];
+  //     return eventDate === date;
+  //   });
+  //   return of(filteredEvents);
+  // }
+  async getEventsByDate(date: string): Promise<Observable<calendarEvent[]>> {
+    // Get events Observable and filter by date
+    return (await this.getEvents()).pipe(
+      map(events => events.filter(event => {
+        console.log("event by date", event.id, event.start.toString());
+        let eventDate: any;
+        try {
+        const eventDate = event.start.toISOString().split('T')[0];
+
+        } catch (error) {
+          console.log(error, event.id, event.description);
+        }
+        return eventDate === date;
+      }))
+    );
   }
 }

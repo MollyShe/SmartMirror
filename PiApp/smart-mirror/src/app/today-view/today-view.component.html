@@ -12,7 +12,7 @@
       <div *ngIf="events.length > 0; else noEvents">
         <div class="event" *ngFor="let event of events">
           <div class="event-time">
-            {{ formatTime(event.startTime) }} - {{ formatTime(event.endTime) }}
+            {{ formatTime(event.start.toLocaleString()) }} - {{ formatTime(event.end.toLocaleString()) }}
           </div>
           <div class="event-details">
             <h3>{{ event.title }}</h3>
