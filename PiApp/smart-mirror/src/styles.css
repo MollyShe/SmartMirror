@@ -3,4 +3,10 @@
 body {
   background-color: #000000;
   color: white;
+  font-family: 'Nunito', sans-serif;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: url('./assets/fonts/Nunito-VariableFont_wght.ttf');
 }
