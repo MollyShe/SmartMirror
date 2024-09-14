@@ -84,7 +84,7 @@ def track_movement(landmark_history):
         and current_time - last_swipe_time > cooldown
     ):
         last_swipe_time = current_time
-        return "Right" if distance > 0 else "Left"
+        return "Right" if distance < 0 else "Left"
     return None
 
 async def main():
