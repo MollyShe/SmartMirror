@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { EventService } from '../services/event.service';
 import { format, parseISO } from 'date-fns';
 import { CommonModule } from '@angular/common';
@@ -8,7 +8,7 @@ interface Event {
   title: string;
   description?: string;
   startTime: string; // ISO string
-  endTime: string;   // ISO string
+  endTime: string; // ISO string
 }
 
 @Component({
@@ -24,7 +24,7 @@ export class TodayViewComponent implements OnInit {
   isLoading: boolean = false;
   errorMessage: string = '';
 
-  constructor(private eventService: EventService) { }
+  constructor(@Inject(EventService) private eventService: EventService) {}
 
   ngOnInit(): void {
     this.loadTodayEvents();
@@ -39,7 +39,9 @@ export class TodayViewComponent implements OnInit {
         this.isLoading = false;
         // Sort events by start time
         this.events = data.sort((a: Event, b: Event) => {
-          return parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime();
+          return (
+            parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()
+          );
         });
       },
       (error: any) => {

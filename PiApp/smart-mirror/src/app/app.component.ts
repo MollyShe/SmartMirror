@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { TodayViewComponent } from './today-view/today-view.component';
-import { WeatherViewComponent } from './weather-view/weather-view.component';
 import { provideHttpClient } from '@angular/common/http';
+import { CarouselComponent } from './carousel/carousel.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, TodayViewComponent, WeatherViewComponent],
+  imports: [RouterOutlet, CarouselComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
