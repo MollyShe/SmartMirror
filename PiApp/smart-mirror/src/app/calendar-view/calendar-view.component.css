@@ -1,10 +1,49 @@
 /* src/app/calendar/calendar.component.css */
 
 .calendar-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.day-column {
+  flex: 1;
+  border-left: 1px solid #ddd;
+  position: relative;
+}
+
+.calendar-body {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  overflow-y: auto;
+}
+
+.day-column {
+  flex: 1;
+  position: relative;
+  min-height: 100%;
+}
+
+.day-column .time-slot {
+  height: 60px;
+  border-bottom: 1px solid #eee;
+  min-height: 60px;
+}
+
+.event {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    background-color: #4285F4;
+    color: white;
+    padding: 2px;
+    border-radius: 4px;
+    font-size: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    padding-left: 5px;
   }
   
   .calendar-header {
@@ -13,21 +52,10 @@
     background-color: rgb(16, 50, 102);
   }
   
-  .time-column {
-    width: 60px;
-    background-color: #f9f9f9;
-  }
-  
   .day-columns {
     display: flex;
     flex: 1;
     background-color: rgb(11, 29, 57);
-  }
-  
-  .day-column {
-    flex: 1;
-    border-left: 1px solid #ddd;
-    position: relative;
   }
   
   .day-header {
@@ -37,13 +65,6 @@
     text-align: center;
     font-weight: bold;
     font-size: 20px;
-  }
-  
-  .calendar-body {
-    display: flex;
-    flex: 1;
-    overflow: auto;
-    overflow-y: auto;
   }
   
   .time-column {
@@ -60,30 +81,5 @@
     text-align: right;
     padding-right: 5px;
     box-sizing: border-box;
-  }
-  
-  .day-column {
-    flex: 1;
-    position: relative;
-    min-height: 100%;
-  }
-  
-  .day-column .time-slot {
-    height: 60px;
-    border-bottom: 1px solid #eee;
-    min-height: 60px;
-  }
-  
-  .event {
-    position: absolute;
-    left: 5px;
-    right: 5px;
-    background-color: #4285F4;
-    color: white;
-    padding: 2px;
-    border-radius: 4px;
-    font-size: 15px;
-    overflow: hidden;
-    cursor: pointer;
   }
   
