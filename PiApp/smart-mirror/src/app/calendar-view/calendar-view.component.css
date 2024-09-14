@@ -35,10 +35,11 @@
     position: absolute;
     left: 3px;
     right: 3px;
-    background-color: #4285F4;
-    color: white;
+    background-color: white;
+    color: #1b4fa1;
     border-radius: 4px;
-    font-size: 15px;
+    font-size: 18px;
+    font-weight: bold;
     overflow: hidden;
     cursor: pointer;
     padding-left: 5px;
