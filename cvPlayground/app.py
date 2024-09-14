@@ -10,37 +10,22 @@ from collections import deque
 from model import KeyPointClassifier
 
 import asyncio
+import signal
 import websockets
 import json
+import sys
 from time import time
+from websockets.exceptions import ConnectionClosed
 
 DEBUG_MODE = False
-# class CvFpsCalc(object):
-#     def __init__(self, buffer_len=1):
-#         self._start_tick = cv.getTickCount()
-#         self._freq = 1000.0 / cv.getTickFrequency()
-#         self._difftimes = deque(maxlen=buffer_len)
 
-#     def get(self):
-#         current_tick = cv.getTickCount()
-#         different_time = (current_tick - self._start_tick) * self._freq
-#         self._start_tick = current_tick
-
-#         self._difftimes.append(different_time)
-
-#         fps = 1000.0 / (sum(self._difftimes) / len(self._difftimes))
-#         fps_rounded = round(fps, 2)
-
-#         return fps_rounded
-
-# WebSocket server
 connected = set()
 
 
-async def register(websocket):
+def register(websocket):
     connected.add(websocket)
     try:
-        await websocket.wait_closed()
+        websocket.wait_closed()
     finally:
         connected.remove(websocket)
 
@@ -54,18 +39,68 @@ async def websocket_server():
     server = await websockets.serve(register, "localhost", 8765)
     await server.wait_closed()
 
+async def close_websocket_connections():
+    for websocket in connected:
+        try:
+            await websocket.close(1001, "Server shutting down")
+        except ConnectionClosed:
+            pass  # Connection already closed
+
+async def shutdown(cap, loop, timeout=5):
+    print("Shutting down...")
+
+    # Close websocket connections
+    await close_websocket_connections()
+
+    cap.release()
+    if DEBUG_MODE:
+        cv.destroyAllWindows()
+
+    # Get all running tasks
+    tasks = [t for t in asyncio.all_tasks(loop=loop) if t is not asyncio.current_task()]
+
+    # Cancel all tasks
+    for task in tasks:
+        task.cancel()
+
+    print(f"Cancelling {len(tasks)} tasks...")
+
+    try:
+        # Wait for all tasks to be cancelled with a timeout
+        await asyncio.wait(tasks, timeout=timeout)
+    except asyncio.TimeoutError:
+        print(f"Timeout occurred. Some tasks didn't finish within {timeout} seconds.")
+    except Exception as e:
+        print(f"An error occurred during shutdown: {e}")
+    finally:
+        # Stop the event loop
+        loop.stop()
+
+    print("Shutdown complete.")
+
 
 # Variables for swipe detection
 swipe_threshold = 650  # Percentage of screen width
 min_velocity = 9000  # Minimum velocity for a swipe (screen widths per second)
 last_swipe_time = 0
-cooldown = 1  # Cooldown period in seconds
+cooldown = 1.5  # Cooldown period in seconds
+min_frames_visible = 6  # Minimum number of frames the hand needs to be visible
+consecutive_hand_sign_4 = 0
 
+# Track hand visibility
+hand_visible_frames = 0
+hand_visible = False
 
 def track_movement(landmark_history):
-    global last_swipe_time
+    global last_swipe_time, hand_visible_frames
+
     if len(landmark_history) < 2:
         return None
+    
+    if hand_visible_frames < min_frames_visible:
+        return None
+    else: 
+        hand_visible_frames = 0
 
     frame_width = 1  # Normalized coordinates
     current_time = time()
@@ -106,14 +141,14 @@ async def main():
 
 
 async def process_stream():
-    args = {
-        "device": 0,
-        "width": 1440,
-        "height": 810,
-        "use_static_image_mode": "store_true",
-        "min_detection_confidence": 0.7,
-        "min_tracking_confidence": 0.5,
-    }
+    global hand_visible_frames, consecutive_hand_sign_4
+    args = {"device": 0,
+            "width": 1440, 
+            "height": 810, 
+            "use_static_image_mode": "store_true", 
+            "min_detection_confidence": 0.7, 
+            "min_tracking_confidence": 0.5
+            }
 
     cap_device = args["device"]
     cap_width = args["width"]
@@ -160,10 +195,11 @@ async def process_stream():
         # fps = cvFpsCalc.get()
 
         # Process Key (ESC: end)
-        key = cv.waitKey(10)
-        if key == 27:  # ESC
-            break
-        number, mode = select_mode(key, mode)
+        if DEBUG_MODE:
+            key = cv.waitKey(10)
+            if key == 27:  # ESC
+                break
+            number, mode = select_mode(key, mode)
 
         # Camera capture
         ret, image = cap.read()
@@ -180,9 +216,9 @@ async def process_stream():
         image.flags.writeable = True
 
         if results.multi_hand_landmarks is not None:
-            for hand_landmarks, handedness in zip(
-                results.multi_hand_landmarks, results.multi_handedness
-            ):
+            hand_visible_frames += 1
+            for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
+                                                  results.multi_handedness):
                 # Bounding box calculation
                 brect = calc_bounding_rect(debug_image, hand_landmarks)
                 # Landmark calculation
@@ -196,15 +232,28 @@ async def process_stream():
                 # Track movement direction
                 movement_direction = track_movement(landmark_history)
 
-                if movement_direction:
-                    print(f"Swipe {movement_direction} detected!")
-                    await broadcast({"swipe": movement_direction})
-
-                # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list)
+                if DEBUG_MODE:
+                    # Write to the dataset file
+                    logging_csv(number, mode, pre_processed_landmark_list)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                
+
+                correct_sign = hand_sign_id == 5 or hand_sign_id == 2 or hand_sign_id == 0
+                if movement_direction and correct_sign :
+                    print(f"Swipe {movement_direction} detected!")
+                    await broadcast({"swipe": movement_direction})
+                
+                if hand_sign_id == 4:
+                    consecutive_hand_sign_4 += 1
+                    if consecutive_hand_sign_4 >= 15:
+                        print("Shutdown gesture detected for 15 frames!")
+                        await broadcast({"message": "Screw You, BYE!"})
+                        await shutdown(cap, asyncio.get_running_loop())
+                        return
+                else:
+                    consecutive_hand_sign_4 = 0
 
                 # Drawing part
                 if DEBUG_MODE:
@@ -218,6 +267,7 @@ async def process_stream():
                     )
                     debug_image = draw_movement_info(debug_image, movement_direction)
         else:
+            consecutive_hand_sign_4 = 0
             landmark_history.clear()
 
         if DEBUG_MODE:
