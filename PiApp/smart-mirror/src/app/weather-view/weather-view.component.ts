@@ -123,7 +123,7 @@ export class WeatherViewComponent implements OnInit {
           this.precipitationChance = data[0].probabilityOfPrecipitation.value;
           this.forecast = data[0].shortForecast;
           this.weatherIcon = data[0].icon;
-
+          
           this.lineChartData = {
             labels: this.temperatureData.map((data) => data.time),
             datasets: [

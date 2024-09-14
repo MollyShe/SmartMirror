@@ -7,33 +7,10 @@
   font-family: Arial, sans-serif;
 }
 
-.calendar-header {
-  display: flex;
-  border-bottom: 1px solid #ddd;
-}
-
-.time-column {
-  width: 60px;
-  background-color: #f9f9f9;
-}
-
-.day-columns {
-  display: flex;
-  flex: 1;
-}
-
 .day-column {
   flex: 1;
   border-left: 1px solid #ddd;
   position: relative;
-}
-
-.day-header {
-  padding: 10px;
-  background-color: #f1f1f1;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-  font-weight: bold;
 }
 
 .calendar-body {
@@ -41,22 +18,6 @@
   flex: 1;
   overflow: auto;
   overflow-y: auto;
-}
-
-.time-column {
-  width: 60px;
-  background-color: #f9f9f9;
-  border-right: 1px solid #ddd;
-}
-
-.time-slot {
-  height: 60px; /* 1 hour = 60px */
-  border-bottom: 1px solid #eee;
-  padding: 2px;
-  font-size: 12px;
-  text-align: right;
-  padding-right: 5px;
-  box-sizing: border-box;
 }
 
 .day-column {
@@ -72,14 +33,53 @@
 }
 
 .event {
-  position: absolute;
-  left: 0px;
-  right: 0px;
-  background-color: #4285f4;
-  color: white;
-  border-radius: 4px;
-  font-size: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  padding-left: 5px;
-}
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    background-color: #4285F4;
+    color: white;
+    padding: 2px;
+    border-radius: 4px;
+    font-size: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    padding-left: 5px;
+  }
+  
+  .calendar-header {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background-color: rgb(16, 50, 102);
+  }
+  
+  .day-columns {
+    display: flex;
+    flex: 1;
+    background-color: rgb(11, 29, 57);
+  }
+  
+  .day-header {
+    padding: 10px;
+    background-color: rgb(51, 90, 149);
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+  }
+  
+  .time-column {
+    width: 60px;
+    background-color: rgb(11, 29, 57);
+    border-right: 1px solid #ddd;
+  }
+  
+  .time-slot {
+    height: 60px; /* 1 hour = 60px */
+    border-bottom: 1px solid #eee;
+    padding: 2px;
+    font-size: 12px;
+    text-align: right;
+    padding-right: 5px;
+    box-sizing: border-box;
+  }
+  
