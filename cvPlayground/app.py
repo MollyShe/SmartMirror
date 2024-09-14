@@ -15,15 +15,16 @@ import websockets
 import json
 import sys
 from time import time
+from websockets.exceptions import ConnectionClosed
 
 DEBUG_MODE = False
 
 connected = set()
 
-async def register(websocket):
+def register(websocket):
     connected.add(websocket)
     try:
-        await websocket.wait_closed()
+        websocket.wait_closed()
     finally:
         connected.remove(websocket)
 
@@ -35,17 +36,25 @@ async def websocket_server():
     server = await websockets.serve(register, "localhost", 8765)
     await server.wait_closed()
 
-async def shutdown(cap):
+async def close_websocket_connections():
+    for websocket in connected:
+        try:
+            await websocket.close(1001, "Server shutting down")
+        except ConnectionClosed:
+            pass  # Connection already closed
+
+async def shutdown(cap, loop, timeout=5):
     print("Shutting down...")
+
+    # Close websocket connections
+    await close_websocket_connections()
 
     cap.release()
     if DEBUG_MODE:
         cv.destroyAllWindows()
 
-    
-
     # Get all running tasks
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    tasks = [t for t in asyncio.all_tasks(loop=loop) if t is not asyncio.current_task()]
 
     # Cancel all tasks
     for task in tasks:
@@ -54,19 +63,17 @@ async def shutdown(cap):
     print(f"Cancelling {len(tasks)} tasks...")
 
     try:
-        # Wait for all tasks to be cancelled
-        await asyncio.gather(*tasks, return_exceptions=True)
-    except Exception: 
-        pass
+        # Wait for all tasks to be cancelled with a timeout
+        await asyncio.wait(tasks, timeout=timeout)
+    except asyncio.TimeoutError:
+        print(f"Timeout occurred. Some tasks didn't finish within {timeout} seconds.")
+    except Exception as e:
+        print(f"An error occurred during shutdown: {e}")
     finally:
-        # Force exit to prevent any further error logging
-        sys.exit(0)
+        # Stop the event loop
+        loop.stop()
 
     print("Shutdown complete.")
-
-    loop = asyncio.get_running_loop()
-    loop.stop()
-    
 
 
 # Variables for swipe detection
@@ -234,7 +241,7 @@ async def process_stream():
                     if consecutive_hand_sign_4 >= 15:
                         print("Shutdown gesture detected for 15 frames!")
                         await broadcast({"message": "Screw You, BYE!"})
-                        await shutdown(cap)
+                        await shutdown(cap, asyncio.get_running_loop())
                         return
                 else:
                     consecutive_hand_sign_4 = 0
