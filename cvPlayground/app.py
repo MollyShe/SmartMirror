@@ -46,7 +46,7 @@ def main():
 
     use_brect = True
 
-    landmark_history = deque(maxlen=8)
+    landmark_history = deque(maxlen=4)
 
     # Camera preparation
     cap = cv.VideoCapture(cap_device)
@@ -57,7 +57,7 @@ def main():
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
-        max_num_hands=2,
+        max_num_hands=1,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )
@@ -191,48 +191,36 @@ def draw_movement_info(image, movement_direction):
     cv.putText(image, f"Vertical Move : {movement_direction[1]}", (10, 100), font, 1, (0, 0, 255), 2)
     return image
 
-def track_movement(points_deque, thresholdX = 90, thresholdY = 60, time_interval=4):
+def track_movement(points_deque, thresholdX=60, thresholdY=60):
     # Ensure deque has at least two frames to compare
     if len(points_deque) < 2:
         return 'Not enough frames to calculate velocity'
     
-    total_displacement_x = 0
-    total_displacement_y = 0
-    num_frames = len(points_deque) - 1
-    
-    # Iterate through consecutive frames
-    for i in range(len(points_deque) - 1):
-        prev_frame = points_deque[i]
-        current_frame = points_deque[i + 1]
-        
-        # Calculate the displacement between corresponding points
-        frame_displacement_x = 0
-        frame_displacement_y = 0
-        for prev_point, current_point in zip(prev_frame, current_frame):
-            frame_displacement_x += current_point[0] - prev_point[0]
-            frame_displacement_y += current_point[1] - prev_point[1]
-        
-        total_displacement_x += frame_displacement_x
-        total_displacement_y += frame_displacement_y
-    
-    # Calculate the velocity
-    velocity_x = total_displacement_x / (num_frames * time_interval)
-    velocity_y = total_displacement_y / (num_frames * time_interval)
+    # Get the current position of the index finger tip
+    x, y = points_deque[-1][8]
 
-    
-    if velocity_x > 0 and abs(velocity_x) > thresholdX:
-        result_x = f'Velocity: {velocity_x} (Right)'
-    elif velocity_x < 0 and abs(velocity_x) > thresholdX:
-        result_x =  f'Velocity: {velocity_x} (Left)'
-    else:
-        result_x = 'Velocity: 0 (Stationary)'
+    # Get second to last position of the index finger tip
+    prev_x, prev_y = points_deque[-2][8]
 
-    if velocity_y > 0 and abs(velocity_y) > thresholdY - 45:
-        result_y = f'Velocity: {velocity_y} (Down)'
-    elif velocity_y < 0 and abs(velocity_y) > thresholdY:
-        result_y =  f'Velocity: {velocity_y} (Up)'
+    # Detect swipe gesture horizontally
+    diff_x = x - prev_x
+    if abs(diff_x) > thresholdX:
+        if diff_x > 0:
+                result_x = "Right"
+        else:
+            result_x = "Left"
     else:
-        result_y = 'Velocity: 0 (Stationary)'
+        result_x = "Stationary"
+
+    # Detect swipe gesture horizontally
+    diff_y = y - prev_y
+    if abs(diff_y) > thresholdY:
+        if diff_y > 0:
+                result_y = "Right"
+        else:
+            result_y = "Left"
+    else:
+        result_y = "Stationary"
 
     return result_x, result_y
     
