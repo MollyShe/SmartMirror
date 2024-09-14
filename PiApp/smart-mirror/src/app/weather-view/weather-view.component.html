@@ -1,0 +1,36 @@
+<div class="weather-container">
+  <div class="weather-grid">
+    <div class="weather-info1">
+      <div class="location">{{ location }}</div>
+      <div class="current-temp">{{ temperature }}°F</div>
+      <div class="weather-icon">
+        <!-- Replace with actual icon component or image based on weatherIcon -->
+        <img [src]="weatherIcon" alt="Weather icon" />
+      </div>
+    </div>
+
+    <div class="weather-content">
+      <div class="weather-info">
+        <div class="precipitation">
+          Chance of precipitation: {{ precipitationChance }}%
+        </div>
+      </div>
+
+      <mat-card class="time-temp-graph">
+        <mat-card-content>
+          <canvas
+            baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [type]="'line'"
+          >
+          </canvas>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="future-forecast">
+        {{ forecast }}
+      </div>
+    </div>
+  </div>
+</div>

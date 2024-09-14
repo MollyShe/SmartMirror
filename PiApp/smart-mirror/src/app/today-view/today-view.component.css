@@ -1,0 +1,60 @@
+.today-view {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+  }
+  
+  .today-view h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .loading {
+    text-align: center;
+    color: #555;
+  }
+  
+  .error {
+    text-align: center;
+    color: red;
+  }
+  
+  .event {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
+  }
+  
+  .event-time {
+    width: 150px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .event-details {
+    flex: 1;
+  }
+  
+  .event-details h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+  }
+  
+  .event-details p {
+    margin: 0;
+    color: #777;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .event {
+      flex-direction: column;
+    }
+  
+    .event-time {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+  }
+  
