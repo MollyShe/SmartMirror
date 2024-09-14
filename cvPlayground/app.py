@@ -9,25 +9,88 @@ import mediapipe as mp
 from collections import deque
 from model import KeyPointClassifier
 
-class CvFpsCalc(object):
-    def __init__(self, buffer_len=1):
-        self._start_tick = cv.getTickCount()
-        self._freq = 1000.0 / cv.getTickFrequency()
-        self._difftimes = deque(maxlen=buffer_len)
+import asyncio
+import websockets
+import json
+from time import time
 
-    def get(self):
-        current_tick = cv.getTickCount()
-        different_time = (current_tick - self._start_tick) * self._freq
-        self._start_tick = current_tick
+# class CvFpsCalc(object):
+#     def __init__(self, buffer_len=1):
+#         self._start_tick = cv.getTickCount()
+#         self._freq = 1000.0 / cv.getTickFrequency()
+#         self._difftimes = deque(maxlen=buffer_len)
 
-        self._difftimes.append(different_time)
+#     def get(self):
+#         current_tick = cv.getTickCount()
+#         different_time = (current_tick - self._start_tick) * self._freq
+#         self._start_tick = current_tick
 
-        fps = 1000.0 / (sum(self._difftimes) / len(self._difftimes))
-        fps_rounded = round(fps, 2)
+#         self._difftimes.append(different_time)
 
-        return fps_rounded
+#         fps = 1000.0 / (sum(self._difftimes) / len(self._difftimes))
+#         fps_rounded = round(fps, 2)
+
+#         return fps_rounded
     
-def main():
+# WebSocket server
+connected = set()
+
+async def register(websocket):
+    connected.add(websocket)
+    try:
+        await websocket.wait_closed()
+    finally:
+        connected.remove(websocket)
+
+async def broadcast(message):
+    for websocket in connected:
+        await websocket.send(json.dumps(message))
+
+async def websocket_server():
+    server = await websockets.serve(register, "localhost", 8765)
+    await server.wait_closed()
+
+# Variables for swipe detection
+swipe_threshold = 0.47  # Percentage of screen width
+min_velocity = 290 # Minimum velocity for a swipe (screen widths per second)
+last_swipe_time = 0
+cooldown = 1.5  # Cooldown period in seconds
+
+def track_movement(landmark_history):
+    global last_swipe_time
+    if len(landmark_history) < 2:
+        return None
+
+    frame_width = 1  # Normalized coordinates
+    current_time = time()
+
+    # Use the tip of the index finger (landmark 8) for tracking
+    start_x = landmark_history[0][8][0]
+    end_x = landmark_history[-1][8][0]
+    start_time = landmark_history[0][8][2] if len(landmark_history[0][8]) > 2 else current_time - 0.1
+    end_time = landmark_history[-1][8][2] if len(landmark_history[-1][8]) > 2 else current_time
+
+    distance = end_x - start_x
+    time_diff = end_time - start_time
+
+    if time_diff == 0:
+        return None
+
+    velocity = abs(distance / frame_width) / time_diff  # In screen widths per second
+    # print("Velocity: ", velocity)
+    if (
+        abs(distance) > frame_width * swipe_threshold
+        and velocity > min_velocity
+        and current_time - last_swipe_time > cooldown
+    ):
+        last_swipe_time = current_time
+        return "Right" if distance > 0 else "Left"
+    return None
+
+async def main():
+    await asyncio.gather(websocket_server(), process_stream())
+
+async def process_stream():
     args = {"device": 0,
             "width": 1440, 
             "height": 810, 
@@ -46,7 +109,7 @@ def main():
 
     use_brect = True
 
-    landmark_history = deque(maxlen=4)
+    landmark_history = deque(maxlen=5)
 
     # Camera preparation
     cap = cv.VideoCapture(cap_device)
@@ -73,12 +136,13 @@ def main():
         ]
 
     # FPS Measurement
-    cvFpsCalc = CvFpsCalc(buffer_len=10)
-
+    # cvFpsCalc = CvFpsCalc(buffer_len=10)
+    global last_swipe_time 
+    last_swipe_time = 0
     mode = 0
 
     while True:
-        fps = cvFpsCalc.get()
+        # fps = cvFpsCalc.get()
 
         # Process Key (ESC: end)
         key = cv.waitKey(10)
@@ -117,6 +181,10 @@ def main():
                 # Track movement direction
                 movement_direction = track_movement(landmark_history)
 
+                if movement_direction:
+                    print(f"Swipe {movement_direction} detected!")
+                    await broadcast({"swipe": movement_direction})
+
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list)
 
@@ -136,7 +204,9 @@ def main():
         else:
             landmark_history.clear()
 
-        debug_image = draw_info(debug_image, fps, mode, number)
+        # debug_image = draw_info(debug_image, fps, mode, number)
+        debug_image = draw_info(debug_image, mode, number)
+        await asyncio.sleep(0.01)  # Small delay to prevent blocking
 
         # Screen reflection
         cv.imshow('Hand Gesture Recognition', debug_image)
@@ -187,42 +257,10 @@ def calc_landmark_list(image, landmarks):
 
 def draw_movement_info(image, movement_direction):
     font = cv.FONT_HERSHEY_SIMPLEX
-    cv.putText(image, f"Horizontal Move : {movement_direction[0]}", (10, 150), font, 1, (0, 0, 255), 2)
-    cv.putText(image, f"Vertical Move : {movement_direction[1]}", (10, 100), font, 1, (0, 0, 255), 2)
+    cv.putText(image, f"Horizontal Move : {movement_direction}", (10, 150), font, 1, (0, 0, 255), 2)
+    # cv.putText(image, f"Vertical Move : {movement_direction[1]}", (10, 100), font, 1, (0, 0, 255), 2)
     return image
 
-def track_movement(points_deque, thresholdX=60, thresholdY=60):
-    # Ensure deque has at least two frames to compare
-    if len(points_deque) < 2:
-        return 'Not enough frames to calculate velocity'
-    
-    # Get the current position of the index finger tip
-    x, y = points_deque[-1][8]
-
-    # Get second to last position of the index finger tip
-    prev_x, prev_y = points_deque[-2][8]
-
-    # Detect swipe gesture horizontally
-    diff_x = x - prev_x
-    if abs(diff_x) > thresholdX:
-        if diff_x > 0:
-                result_x = "Right"
-        else:
-            result_x = "Left"
-    else:
-        result_x = "Stationary"
-
-    # Detect swipe gesture horizontally
-    diff_y = y - prev_y
-    if abs(diff_y) > thresholdY:
-        if diff_y > 0:
-                result_y = "Right"
-        else:
-            result_y = "Left"
-    else:
-        result_y = "Stationary"
-
-    return result_x, result_y
     
 
 def pre_process_landmark(landmark_list):
@@ -256,7 +294,7 @@ def logging_csv(number, mode, landmark_list):
     if mode == 0:
         pass
     if mode == 1 and (0 <= number <= 9):
-        csv_path = 'model/keypoint_classifier/keypoint.csv'
+        csv_path = 'model/handClassifier/keypoint.csv'
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *landmark_list])
@@ -473,11 +511,11 @@ def draw_info_text(image, brect, handedness, hand_sign_text):
     return image
 
 
-def draw_info(image, fps, mode, number):
-    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-               1.0, (0, 0, 0), 4, cv.LINE_AA)
-    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-               1.0, (255, 255, 255), 2, cv.LINE_AA)
+def draw_info(image, mode, number):
+    # cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
+    #            1.0, (0, 0, 0), 4, cv.LINE_AA)
+    # cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
+    #            1.0, (255, 255, 255), 2, cv.LINE_AA)
 
     mode_string = ['Logging Key Point']
     if 1 <= mode <= 2:
@@ -492,4 +530,4 @@ def draw_info(image, fps, mode, number):
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
