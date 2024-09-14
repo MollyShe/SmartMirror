@@ -1,1 +1,29 @@
-<p>today-view works!</p>
+<div class="today-view">
+  
+    <div *ngIf="isLoading" class="loading">
+      Loading events...
+    </div>
+  
+    <div *ngIf="errorMessage" class="error">
+      {{ errorMessage }}
+    </div>
+  
+    <div *ngIf="!isLoading && !errorMessage">
+      <div *ngIf="events.length > 0; else noEvents">
+        <div class="event" *ngFor="let event of events">
+          <div class="event-time">
+            {{ formatTime(event.startTime) }} - {{ formatTime(event.endTime) }}
+          </div>
+          <div class="event-details">
+            <h3>{{ event.title }}</h3>
+            <p *ngIf="event.description">{{ event.description }}</p>
+          </div>
+        </div>
+      </div>
+  
+      <ng-template #noEvents>
+        <p>No events for today!</p>
+      </ng-template>
+    </div>
+  </div>
+  
