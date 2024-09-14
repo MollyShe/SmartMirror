@@ -1,5 +1,5 @@
 .weather-container {
-  border: 1px solid #ccc;
+  border: 1px solid #000000;
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
@@ -54,21 +54,22 @@ h2 {
 }
 
 .precipitation {
-  font-size: 1em;
+  font-size: 24px;
   border: 1px solid #ddd;
   padding: 15px;
 }
 
 .time-temp-graph {
-  border: 1px solid #ddd;
   padding: 15px;
   text-align: center;
+  background-color: black;
   min-height: 150px; /* Adjust based on your actual graph size */
 }
 
 .future-forecast {
   border: 1px solid #ddd;
   padding: 15px;
+  font-size: 24px;
 }
 
 @media (max-width: 600px) {
