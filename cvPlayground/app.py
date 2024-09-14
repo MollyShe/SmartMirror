@@ -75,6 +75,7 @@ min_velocity = 290 # Minimum velocity for a swipe (screen widths per second)
 last_swipe_time = 0
 cooldown = 1.5  # Cooldown period in seconds
 min_frames_visible = 6  # Minimum number of frames the hand needs to be visible
+consecutive_hand_sign_4 = 0
 
 # Track hand visibility
 hand_visible_frames = 0
@@ -122,7 +123,7 @@ async def main():
 
 
 async def process_stream():
-    global hand_visible_frames
+    global hand_visible_frames, consecutive_hand_sign_4
     args = {"device": 0,
             "width": 1440, 
             "height": 810, 
@@ -227,10 +228,14 @@ async def process_stream():
                     await broadcast({"swipe": movement_direction})
                 
                 if hand_sign_id == 4:
-                    print("Shutdown gesture detected!")
-                    await broadcast({"message": "Screw You, BYE!"})
-                    await shutdown(cap)
-                    return
+                    consecutive_hand_sign_4 += 1
+                    if consecutive_hand_sign_4 >= 15:
+                        print("Shutdown gesture detected for 15 frames!")
+                        await broadcast({"message": "Screw You, BYE!"})
+                        await shutdown(cap)
+                        return
+                else:
+                    consecutive_hand_sign_4 = 0
 
                 # Drawing part
                 if DEBUG_MODE: 
@@ -244,6 +249,7 @@ async def process_stream():
                     )
                     debug_image = draw_movement_info(debug_image, movement_direction)
         else:
+            consecutive_hand_sign_4 = 0
             landmark_history.clear()
 
         if DEBUG_MODE:
