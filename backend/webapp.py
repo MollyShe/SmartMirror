@@ -12,19 +12,30 @@ def hello_world():
 def calendar():
     file = open("./calendar.ics")
     calendar = icalendar.Calendar.from_ical(file.read())
-    eventsntimes = {
-        "name":  [],
-        "timestart": [],
-        "timeend": []
-    }
+    eventsntimes = []
+    i=0
     for event in calendar.walk('VEVENT'):
-        eventsntimes["name"].append(str(event.get("SUMMARY")))
-        eventsntimes["timestart"].append(str(event.get("DTSTART")))
-        eventsntimes["timeend"].append(str(event.get("dtend")))
+        
+        eventsntimes.append(dict(id = i, title = str(event.get("SUMMARY"),), start = cleanTime(str(event.get("DTSTART"))), end = cleanTime(str(event.get("dtend")) )))
+        #eventsntimes[i].append(str(event.get("SUMMARY")))
+        #eventsntimes[i].append(str(event.get("DTSTART")))
+        #eventsntimes[i].append(str(event.get("dtend")))
+        
+        i+=1
 
         #eventsntimes.append([event.get("SUMMARY"), event.get("DTSTART")])
     print(eventsntimes)
-    return json.dumps(eventsntimes)
+    return eventsntimes
+
+def cleanTime(datetime: str):
+    if(datetime):
+        datetime = datetime.removeprefix("vDDDTypes(")
+        datetime = datetime.removesuffix(", Parameters({}))")
+
+        return datetime
+    
+    return
+
 
 def getTemp():
     r = requests.get(url=f"http://api.openweathermap.org/data/2.5/forecast?id=524901&appid={apiKeys.getWeatherAPIkey()}")
