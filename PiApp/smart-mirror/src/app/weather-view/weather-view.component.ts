@@ -56,7 +56,7 @@ export class WeatherViewComponent implements OnInit {
         fill: false,
         tension: 0.5,
         borderColor: 'rgba(255,165,0,0.8)',
-        backgroundColor: 'rgba(255,165,0,0.3)',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
       },
     ],
   };
@@ -101,7 +101,7 @@ export class WeatherViewComponent implements OnInit {
           this.temperature = newTempData[0].temp;
           this.precipitationChance = data[0].probabilityOfPrecipitation.value;
           this.forecast = data[0].shortForecast;
-
+          this.weatherIcon = data[0].icon;
           this.lineChartData = {
             labels: this.temperatureData.map((data) => data.time),
             datasets: [
