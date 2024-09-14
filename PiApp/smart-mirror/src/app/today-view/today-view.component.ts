@@ -2,6 +2,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { EventService } from '../services/event.service';
 import { format, parseISO } from 'date-fns';
 import { CommonModule } from '@angular/common';
+import { CalendarEvent } from '../services/event.service';
 
 interface Event {
   id: number;
@@ -19,7 +20,7 @@ interface Event {
   imports: [CommonModule],
 })
 export class TodayViewComponent implements OnInit {
-  events: Event[] = [];
+  events: CalendarEvent[] = [];
   currentDate: Date = new Date();
   isLoading: boolean = false;
   errorMessage: string = '';
@@ -30,18 +31,16 @@ export class TodayViewComponent implements OnInit {
     this.loadTodayEvents();
   }
 
-  loadTodayEvents(): void {
+  async loadTodayEvents(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
     const dateStr = format(this.currentDate, 'yyyy-MM-dd');
-    this.eventService.getEventsByDate(dateStr).subscribe(
-      (data: Event[]) => {
+    (await this.eventService.getEvents()).subscribe(
+      (data: CalendarEvent[]) => {
         this.isLoading = false;
         // Sort events by start time
-        this.events = data.sort((a: Event, b: Event) => {
-          return (
-            parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime()
-          );
+        this.events = data.sort((a: CalendarEvent, b: CalendarEvent) => {
+          return a.start.getTime() - b.start.getTime();
         });
       },
       (error: any) => {

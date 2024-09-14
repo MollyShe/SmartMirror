@@ -1,41 +1,13 @@
-import { Component, OnInit, NgModule, Inject } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  addDays,
-  format,
-  isSameMonth,
-  isSameDay,
-} from 'date-fns';
-import { EventService } from '../services/event.service';
-
-interface Event {
-  id: number;
-  title: string;
-  description?: string;
-  startTime: string; // ISO string
-  endTime: string; // ISO string
-}
-
-interface CalendarEvent extends Event {
-  id: number;
-  title: string;
-  start: Date | string;
-  end: Date | string;
-  description?: string;
-}
+import { EventService, CalendarEvent } from '../services/event.service';
 
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './calendar-view.component.html',
-  styleUrls: ['./calendar-view.component.css']
+  styleUrls: ['./calendar-view.component.css'],
 })
 export class CalendarViewComponent implements OnInit {
   daysOfWeek: string[] = [];
@@ -46,7 +18,6 @@ export class CalendarViewComponent implements OnInit {
   startHour: number = 6; // 6 AM
   endHour: number = 22; // 10 PM
 
-  constructor(private eventService: EventService) {}
   constructor(@Inject(EventService) private eventService: EventService) {}
 
   ngOnInit(): void {
@@ -83,12 +54,11 @@ export class CalendarViewComponent implements OnInit {
   async fetchEvents(): Promise<void> {
     const events = await this.eventService.getEvents();
     (await this.eventService.getEvents()).subscribe({
-      next: (events: CalendarEvent[]) => {
-        this.events = events.map(event => ({
+      next: (value: CalendarEvent[]) => {
+        this.events = value.map((event) => ({
           ...event,
           start: new Date(event.start),
           end: new Date(event.end),
-          
         }));
       },
       error: (err) => {
