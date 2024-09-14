@@ -1,4 +1,10 @@
-import { Component, HostListener, ElementRef } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 
@@ -6,6 +12,8 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { TodayViewComponent } from '../today-view/today-view.component';
 import { WeatherViewComponent } from '../weather-view/weather-view.component';
 import { CalendarViewComponent } from '../calendar-view/calendar-view.component';
+import { SwipeDetectionService } from '../services/swipe.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-carousel',
@@ -94,7 +102,7 @@ import { CalendarViewComponent } from '../calendar-view/calendar-view.component'
     ]),
   ],
 })
-export class CarouselComponent {
+export class CarouselComponent implements OnInit, OnDestroy {
   currentIndex = 0;
   prevIndex = 0;
   translateX = 0;
@@ -102,8 +110,12 @@ export class CarouselComponent {
   private startY: number | null = null;
   private isDragging = false;
   private containerWidth: number;
+  private swipeSubscription: Subscription | undefined;
 
-  constructor(private el: ElementRef) {
+  constructor(
+    private el: ElementRef,
+    private swipeDetectionService: SwipeDetectionService
+  ) {
     this.containerWidth = 0;
   }
 
@@ -222,5 +234,23 @@ export class CarouselComponent {
 
   private updateTranslateX() {
     this.translateX = -this.currentIndex * this.containerWidth;
+  }
+
+  ngOnDestroy() {
+    if (this.swipeSubscription) {
+      this.swipeSubscription.unsubscribe();
+    }
+  }
+
+  ngOnInit() {
+    this.swipeSubscription = this.swipeDetectionService.swipeEvents.subscribe(
+      (direction: string) => {
+        if (direction === 'Left') {
+          this.nextSlide();
+        } else if (direction === 'Right') {
+          this.prevSlide();
+        }
+      }
+    );
   }
 }
