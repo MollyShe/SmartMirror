@@ -29,8 +29,8 @@ class CvFpsCalc(object):
     
 def main():
     args = {"device": 0,
-            "width": 960, 
-            "height": 540, 
+            "width": 1440, 
+            "height": 810, 
             "use_static_image_mode": "store_true", 
             "min_detection_confidence": 0.7, 
             "min_tracking_confidence": 0.5
@@ -45,6 +45,8 @@ def main():
     min_tracking_confidence = args["min_tracking_confidence"]
 
     use_brect = True
+
+    landmark_history = deque(maxlen=8)
 
     # Camera preparation
     cap = cv.VideoCapture(cap_device)
@@ -110,6 +112,11 @@ def main():
                 pre_processed_landmark_list = pre_process_landmark(
                     landmark_list)
                 
+                landmark_history.append(landmark_list)
+
+                # Track movement direction
+                movement_direction = track_movement(landmark_history)
+
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list)
 
@@ -125,8 +132,9 @@ def main():
                     handedness,
                     keypoint_classifier_labels[hand_sign_id],
                 )
+                debug_image = draw_movement_info(debug_image, movement_direction)
         else:
-            pass
+            landmark_history.clear()
 
         debug_image = draw_info(debug_image, fps, mode, number)
 
@@ -141,12 +149,8 @@ def select_mode(key, mode):
     number = -1
     if 48 <= key <= 57:  # 0 ~ 9
         number = key - 48
-    if key == 110:  # n
-        mode = 0
     if key == 107:  # k
         mode = 1
-    if key == 104:  # h
-        mode = 2
     return number, mode
 
 
@@ -181,6 +185,57 @@ def calc_landmark_list(image, landmarks):
 
     return landmark_point
 
+def draw_movement_info(image, movement_direction):
+    font = cv.FONT_HERSHEY_SIMPLEX
+    cv.putText(image, f"Horizontal Move : {movement_direction[0]}", (10, 150), font, 1, (0, 0, 255), 2)
+    cv.putText(image, f"Vertical Move : {movement_direction[1]}", (10, 100), font, 1, (0, 0, 255), 2)
+    return image
+
+def track_movement(points_deque, thresholdX = 90, thresholdY = 60, time_interval=4):
+    # Ensure deque has at least two frames to compare
+    if len(points_deque) < 2:
+        return 'Not enough frames to calculate velocity'
+    
+    total_displacement_x = 0
+    total_displacement_y = 0
+    num_frames = len(points_deque) - 1
+    
+    # Iterate through consecutive frames
+    for i in range(len(points_deque) - 1):
+        prev_frame = points_deque[i]
+        current_frame = points_deque[i + 1]
+        
+        # Calculate the displacement between corresponding points
+        frame_displacement_x = 0
+        frame_displacement_y = 0
+        for prev_point, current_point in zip(prev_frame, current_frame):
+            frame_displacement_x += current_point[0] - prev_point[0]
+            frame_displacement_y += current_point[1] - prev_point[1]
+        
+        total_displacement_x += frame_displacement_x
+        total_displacement_y += frame_displacement_y
+    
+    # Calculate the velocity
+    velocity_x = total_displacement_x / (num_frames * time_interval)
+    velocity_y = total_displacement_y / (num_frames * time_interval)
+
+    
+    if velocity_x > 0 and abs(velocity_x) > thresholdX:
+        result_x = f'Velocity: {velocity_x} (Right)'
+    elif velocity_x < 0 and abs(velocity_x) > thresholdX:
+        result_x =  f'Velocity: {velocity_x} (Left)'
+    else:
+        result_x = 'Velocity: 0 (Stationary)'
+
+    if velocity_y > 0 and abs(velocity_y) > thresholdY - 45:
+        result_y = f'Velocity: {velocity_y} (Down)'
+    elif velocity_y < 0 and abs(velocity_y) > thresholdY:
+        result_y =  f'Velocity: {velocity_y} (Up)'
+    else:
+        result_y = 'Velocity: 0 (Stationary)'
+
+    return result_x, result_y
+    
 
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)
