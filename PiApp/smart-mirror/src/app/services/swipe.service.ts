@@ -9,7 +9,7 @@ export class SwipeDetectionService {
   public swipeEvents = new Subject<string>();
 
   constructor() {
-    this.socket = new WebSocket('ws://localhost:8765');
+    this.socket = new WebSocket('ws://172.29.144.241:8765');
 
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
