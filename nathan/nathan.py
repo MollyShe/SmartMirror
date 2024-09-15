@@ -37,7 +37,7 @@ async def broadcast(message):
 
 
 async def websocket_server():
-    server = await websockets.serve(register, "localhost", 8765)
+    server = await websockets.serve(register, "0.0.0.0", 8765)
     await server.wait_closed()
 
 

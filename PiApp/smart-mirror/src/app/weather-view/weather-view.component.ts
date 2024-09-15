@@ -106,7 +106,7 @@ export class WeatherViewComponent implements OnInit {
   ngOnInit(): void {
     // Here you would typically call a service to fetch real weather data
     this.http
-      .get<[WeatherData]>('http://localhost:5000/temperature')
+      .get<[WeatherData]>('http://172.29.144.241:5400/temperature')
       .subscribe({
         next: (data) => {
           var newTempData: any[] = [];
@@ -123,7 +123,7 @@ export class WeatherViewComponent implements OnInit {
           this.precipitationChance = data[0].probabilityOfPrecipitation.value;
           this.forecast = data[0].shortForecast;
           this.weatherIcon = data[0].icon;
-          
+
           this.lineChartData = {
             labels: this.temperatureData.map((data) => data.time),
             datasets: [
