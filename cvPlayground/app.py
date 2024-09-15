@@ -17,7 +17,7 @@ import sys
 from time import time
 from websockets.exceptions import ConnectionClosed
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 connected = set()
 
@@ -78,8 +78,8 @@ async def shutdown(cap, loop, timeout=5):
 
 # Variables for swipe detection
 swipe_threshold = 0.47  # Percentage of screen width
-min_velocity = 290 # Minimum velocity for a swipe (screen widths per second)
 last_swipe_time = 0
+min_velocity = 1.3 # Determined at process stream time
 cooldown = 1.5  # Cooldown period in seconds
 min_frames_visible = 6  # Minimum number of frames the hand needs to be visible
 consecutive_hand_sign_4 = 0
@@ -88,8 +88,8 @@ consecutive_hand_sign_4 = 0
 hand_visible_frames = 0
 hand_visible = False
 
-def track_movement(landmark_history):
-    global last_swipe_time, hand_visible_frames
+def track_movement(landmark_history, frame_width):
+    global last_swipe_time, hand_visible_frames, min_velocity
 
     if len(landmark_history) < 2:
         return None
@@ -99,13 +99,12 @@ def track_movement(landmark_history):
     else: 
         hand_visible_frames = 0
 
-    frame_width = 1  # Normalized coordinates
     current_time = time()
 
     # Use the tip of the index finger (landmark 8) for tracking
     start_x = landmark_history[0][8][0]
     end_x = landmark_history[-1][8][0]
-    start_time = landmark_history[0][8][2] if len(landmark_history[0][8]) > 2 else current_time - 0.1
+    start_time = landmark_history[0][8][2] if len(landmark_history[0][8]) > 2 else current_time - 0.05
     end_time = landmark_history[-1][8][2] if len(landmark_history[-1][8]) > 2 else current_time
 
     distance = end_x - start_x
@@ -115,10 +114,9 @@ def track_movement(landmark_history):
         return None
 
     velocity = abs(distance / frame_width) / time_diff  # In screen widths per second
-    # print("Velocity: ", velocity)
+    print("Velocity: ", velocity)
     if (
-        abs(distance) > frame_width * swipe_threshold
-        and velocity > min_velocity
+        velocity > min_velocity
         and current_time - last_swipe_time > cooldown
     ):
         last_swipe_time = current_time
@@ -132,16 +130,13 @@ async def main():
 async def process_stream():
     global hand_visible_frames, consecutive_hand_sign_4
     args = {"device": 0,
-            "width": 1440, 
-            "height": 810, 
             "use_static_image_mode": "store_true", 
             "min_detection_confidence": 0.7, 
             "min_tracking_confidence": 0.5
             }
 
     cap_device = args["device"]
-    cap_width = args["width"]
-    cap_height = args["height"]
+    
 
     use_static_image_mode = args["use_static_image_mode"]
     min_detection_confidence = args["min_detection_confidence"]
@@ -149,12 +144,24 @@ async def process_stream():
 
     use_brect = True
 
-    landmark_history = deque(maxlen=5)
+    landmark_history = deque(maxlen=4)
 
     # Camera preparation
     cap = cv.VideoCapture(cap_device)
-    cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-    cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+    cap_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
+    cap_height = cap.get(cv.CAP_PROP_FRAME_HEIGHT)
+
+    # Get screen dimensions
+    import tkinter as tk
+    root = tk.Tk()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    root.destroy()
+
+    # Calculate min_velocity based on camera and screen properties
+    global min_velocity
+    min_velocity = calculate_min_velocity(cap_width, cap_height, screen_width, screen_height)
+
 
     # Model
     mp_hands = mp.solutions.hands
@@ -221,7 +228,7 @@ async def process_stream():
                 landmark_history.append(landmark_list)
 
                 # Track movement direction
-                movement_direction = track_movement(landmark_history)
+                movement_direction = track_movement(landmark_history, cap_width)
 
                 if DEBUG_MODE:
                     # Write to the dataset file
@@ -274,6 +281,32 @@ async def process_stream():
     cap.release()
     if DEBUG_MODE:
         cv.destroyAllWindows()
+
+
+def calculate_min_velocity(camera_width, camera_height, screen_width, screen_height):
+    camera_aspect_ratio = camera_width / camera_height
+    screen_aspect_ratio = screen_width / screen_height
+    
+    # Calculate the diagonal sizes
+    camera_diagonal = np.sqrt(camera_width**2 + camera_height**2)
+    screen_diagonal = np.sqrt(screen_width**2 + screen_height**2)
+    
+    # Calculate base velocity as a fraction of the camera's diagonal
+    # This assumes a "standard" swipe should cover about 1/3 of the camera's view in 1 second
+    base_velocity = (camera_diagonal / 4.7 / camera_width)
+    
+    # Adjust based on the difference in aspect ratios
+    aspect_ratio_factor = max(camera_aspect_ratio, screen_aspect_ratio) / min(camera_aspect_ratio, screen_aspect_ratio)
+    
+    # Adjust based on the relative size of the screen to the camera view
+    size_factor = screen_diagonal / camera_diagonal
+    adjusted_velocity = base_velocity * aspect_ratio_factor * size_factor
+
+    # Ensure the velocity is within a reasonable range
+    min_reasonable_velocity = 0.1  # 10% of screen width per second
+    max_reasonable_velocity = 1.0  # 100% of screen width per second
+    print("Adjusted Velocity: ", adjusted_velocity)
+    return np.clip(adjusted_velocity, min_reasonable_velocity, max_reasonable_velocity)
 
 
 def select_mode(key, mode):
