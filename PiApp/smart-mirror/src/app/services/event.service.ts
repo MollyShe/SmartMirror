@@ -19,7 +19,7 @@ export class EventService {
   constructor() {}
 
   async getEvents(): Promise<Observable<CalendarEvent[]>> {
-    const apiURL = 'http://172.29.144.241:5400/calendar';
+    const apiURL = 'http://10.5.16.53:5400/calendar';
     let json;
     const data = await fetch(apiURL);
     const dates = await data.json();

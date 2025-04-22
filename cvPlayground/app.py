@@ -56,8 +56,8 @@ async def websocket_server():
 
 
 # Variables for swipe detection
-swipe_threshold = 650  # Percentage of screen width
-min_velocity = 4000  # Minimum velocity for a swipe (screen widths per second)
+swipe_threshold = 400  # Percentage of screen width
+min_velocity = 3000  # Minimum velocity for a swipe (screen widths per second)
 last_swipe_time = 0
 cooldown = 1  # Cooldown period in seconds
 
